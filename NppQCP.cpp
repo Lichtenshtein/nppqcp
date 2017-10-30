@@ -423,10 +423,12 @@ LRESULT CALLBACK MessageWindowWinproc(HWND hwnd, UINT message, WPARAM wparam, LP
 		case WM_QCP_START_SCREEN_PICKER:
 		{
 			::SetWindowPos(nppData._nppHandle, HWND_BOTTOM, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+			break;
 		}
 		case WM_QCP_END_SCREEN_PICKER:
 		{
 			::ShowWindow(nppData._nppHandle, SW_SHOW);
+			break;
 		}
 		default:
 		{
@@ -666,7 +668,9 @@ bool CheckSelectionForBracketColor(const HWND h_scintilla, const int start, cons
 			}
 			else {
 				// close bracket ')' found, cut the end and continue
-				buff[i + 1] = '\0';
+				if (i < buff_len-1) buff[i + 1] = '\0';
+				else buff[i] = '\0';
+
 				close_pos += i;
 				break;
 			}
@@ -1019,7 +1023,9 @@ void FindBracketColor(const HWND h_scintilla, const int start_position, const in
 				}
 				else {
 					// close bracket ')' found, cut the end and continue
-					buff[i + 1] = '\0';
+					if (i < buff_length - 1) buff[i + 1] = '\0';
+					else buff[i] = '\0';
+
 					is_valid = true;
 					break;
 				}
