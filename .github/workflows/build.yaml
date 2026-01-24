@@ -10,10 +10,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [x64]
-        configuration: ["Unicode Release"]
-#        platform: [x64, Win32]
-#        configuration: ["Unicode Release", "Unicode Debug"]
+#        platform: [x64]
+#        configuration: ["Unicode Release"]
+        platform: [x64, Win32]
+        configuration: ["Unicode Release", "Unicode Debug"]
         toolset: [v140_xp]
 
     steps:
@@ -48,9 +48,9 @@ jobs:
         with:
           name: NppQCP-${{ matrix.platform }}-${{ matrix.configuration }}
           path: |
-            $env:GITHUB_ENV
-            "${{ matrix.platform }}\${{ matrix.configuration }}\NppQCP.dll"
-            "${{ matrix.configuration }}\NppQCP.dll"
+            ${{ matrix.platform }}/${{ matrix.configuration }}/NppQCP.dll
+            ${{ matrix.configuration }}/NppQCP.dll
+          if-no-files-found: error
 
       - name: Create Release Zip
         if: startsWith(github.ref, 'refs/tags/') && matrix.configuration == 'Unicode Release'
