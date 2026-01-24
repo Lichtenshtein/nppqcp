@@ -1063,10 +1063,10 @@ bool SaveColorMarker(CSSColorParser::Color color, int marker_start, int marker_e
 		ColorMarker& ThisColourMarker = _color_markers[_color_marker_index];
 		std::wstring& HexString = ThisColourMarker.HexString;
 		HexString.resize(String.length());
-		for (int i = 0; i < String.length(); i++)
-		{
-			HexString[i] = String[i];
-		}
+        for (size_t i = 0; i < String.length(); i++)
+        {
+            HexString[i] = String[i];
+        }
 		
 		ThisColourMarker.color = color;
 		ThisColourMarker.start = marker_start;
@@ -1211,3 +1211,4 @@ void ClearColorMarkers() {
 	//::RedrawWindow(h_scintilla, NULL, NULL, RDW_INVALIDATE);
 
 }
+
