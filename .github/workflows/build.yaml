@@ -1,0 +1,68 @@
+name: Build NppQCP
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2019
+
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [x64, Win32]
+        configuration: ["Unicode Release", "Unicode Debug"]
+        toolset: [v140_xp]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build Solution
+        run: |
+          msbuild NppQCP.vcxproj `
+            /m `
+            /p:Configuration="${{ matrix.configuration }}" `
+            /p:Platform="${{ matrix.platform }}" `
+            /p:PlatformToolset="${{ matrix.toolset }}"
+
+      - name: Prepare Artifacts
+        shell: pwsh
+        run: |
+          $dllPath = if ("${{ matrix.platform }}" -eq "x64") {
+              "${{ matrix.platform }}\${{ matrix.configuration }}\NppQCP.dll"
+          } else {
+              "${{ matrix.configuration }}\NppQCP.dll"
+          }
+          
+          # Upload raw DLL as workflow artifact
+          echo "DLL_PATH=$dllPath" >> $env:GITHUB_ENV
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NppQCP-${{ matrix.platform }}-${{ matrix.configuration }}
+          path: ${{ matrix.platform }}\${{ matrix.configuration }}
+
+      - name: Create Release Zip
+        if: startsWith(github.ref, 'refs/tags/') && matrix.configuration == 'Unicode Release'
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $archSuffix = if ("${{ matrix.platform }}" -eq "x64") { "x64" } else { "x86" }
+          $zipName = "NppQCP_$($tag)_$($archSuffix).zip"
+          
+          # Zip the DLL
+          7z a $zipName ${{ matrix.platform }}\${{ matrix.configuration }}
+          echo "ZIP_NAME=$zipName" >> $env:GITHUB_ENV
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/') && matrix.configuration == 'Unicode Release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.platform }}\${{ matrix.configuration }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
