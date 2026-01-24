@@ -10,10 +10,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-#        platform: [x64]
-#        configuration: ["Unicode Release"]
         platform: [x64, Win32]
-        configuration: ["Unicode Release", "Unicode Debug"]
+        configuration: ["Unicode Release"]
+#        configuration: ["Unicode Release", "Unicode Debug"]    
         toolset: [v140_xp]
 
     steps:
