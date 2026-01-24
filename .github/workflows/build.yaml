@@ -48,6 +48,7 @@ jobs:
         with:
           name: NppQCP-${{ matrix.platform }}-${{ matrix.configuration }}
           path: |
+            $env:GITHUB_ENV
             "${{ matrix.platform }}\${{ matrix.configuration }}\NppQCP.dll"
             "${{ matrix.configuration }}\NppQCP.dll"
 
