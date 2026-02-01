@@ -59,7 +59,8 @@ jobs:
           retention-days: 1error
 
       - name: Delete Old Release (Auto-builds only)
-        if: github.ref_type != 'tag' && matrix.platform == 'x64' && github.event_name == 'push'
+        # if: github.ref_type != 'tag' && matrix.platform == 'x64' && github.event_name == 'push'
+        if: github.ref_type != 'tag' && matrix.platform == 'x64'
         uses: dev-drprasad/delete-tag-and-release@v1.1
         with:
           tag_name: ${{ env.RELEASE_TAG }}
