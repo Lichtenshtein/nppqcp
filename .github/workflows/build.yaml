@@ -68,7 +68,8 @@ jobs:
 
       - name: Create Release
         # Create/update a release when pushed or tagged (only for Release configuration)
-        if: github.event_name == 'push' && matrix.configuration == 'Unicode Release'
+        # if: github.event_name == 'push' && matrix.configuration == 'Unicode Release'
+        if: matrix.configuration == 'Unicode Release'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
