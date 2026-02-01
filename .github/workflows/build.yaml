@@ -1,6 +1,9 @@
 name: Build NppQCP
 
 on:
+#  push:
+#    branches: [ main ]
+#    tags: [ 'v*' ]
   workflow_dispatch:
 
 jobs:
@@ -34,39 +37,43 @@ jobs:
         shell: pwsh
         run: |
           $dllPath = if ("${{ matrix.platform }}" -eq "x64") {
-              "${{ matrix.platform }}\${{ matrix.configuration }}\NppQCP.dll"
+              "x64\${{ matrix.configuration }}\NppQCP.dll"
           } else {
               "${{ matrix.configuration }}\NppQCP.dll"
           }
-          
-          # Upload raw DLL as workflow artifact
-          echo "DLL_PATH=$dllPath" >> $env:GITHUB_ENV
+
+          $tagName = if ("${{ github.ref_type }}" -eq "tag") { "${{ github.ref_name }}" } else { "latest-build" }
+          $archSuffix = if ("${{ matrix.platform }}" -eq "x64") { "x64" } else { "x86" }
+          $archiveName = "NppQCP_$($tagName)_$($archSuffix).7z"
+
+          7z a -t7z -mx9 $archiveName $dllPath
+
+          echo "ARCHIVE_NAME=$archiveName" >> $env:GITHUB_ENV
+          echo "RELEASE_TAG=$tagName" >> $env:GITHUB_ENV
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: NppQCP-${{ matrix.platform }}-${{ matrix.configuration }}
-          path: |
-            ${{ matrix.platform }}/${{ matrix.configuration }}/NppQCP.dll
-            ${{ matrix.configuration }}/NppQCP.dll
-          if-no-files-found: error
+          path: ${{ env.ARCHIVE_NAME }}
+          retention-days: 1error
 
-      - name: Create Release Zip
-        if: startsWith(github.ref, 'refs/tags/') && matrix.configuration == 'Unicode Release'
-        shell: pwsh
-        run: |
-          $tag = "${{ github.ref_name }}"
-          $archSuffix = if ("${{ matrix.platform }}" -eq "x64") { "x64" } else { "x86" }
-          $zipName = "NppQCP_$($tag)_$($archSuffix).zip"
-          
-          # Zip the DLL
-          7z a $zipName ${{ matrix.platform }}\${{ matrix.configuration }}
-          echo "ZIP_NAME=$zipName" >> $env:GITHUB_ENV
+      - name: Delete Old Release (Auto-builds only)
+        if: github.ref_type != 'tag' && matrix.platform == 'x64' && github.event_name == 'push'
+        uses: dev-drprasad/delete-tag-and-release@v1.1
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          delete_release: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Release
-        if: startsWith(github.ref, 'refs/tags/') && matrix.configuration == 'Unicode Release'
+      - name: Create Release
+        # Create/update a release when pushed or tagged (only for Release configuration)
+        if: github.event_name == 'push' && matrix.configuration == 'Unicode Release'
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ matrix.platform }}\${{ matrix.configuration }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          files: ${{ env.ARCHIVE_NAME }}
+          generate_release_notes: true
+          prerelease: ${{ github.ref_type != 'tag' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
